@@ -15,7 +15,7 @@ class reg_l1:
         self.mu = mu
         
     def __call__(self, x):
-        return torch.norm(x, p=1)
+        return torch.norm(x, p=1).item()
         
     def prox(self, x, delta=1.0):
         return torch.sign(x) * torch.clamp(torch.abs(x) - (delta * self.mu),min=0)
@@ -30,7 +30,7 @@ class reg_l1_l2:
         self.mu = mu
         
     def __call__(self, x):
-        return 0
+        return torch.norm(torch.norm(x,p=2,dim=1), p=1).item()
         
     def prox(self, x, delta=1.0):
         thresh = delta*self.mu
@@ -58,7 +58,7 @@ class reg_l1_l2_conv(reg_l1_l2):
         super().__init__(mu = mu)
         
     def __call__(self, x):
-        return super.__call__(x.view(x.shape[0]*x.shape[1],-1))
+        return super().__call__(x.view(x.shape[0]*x.shape[1],-1))
     
     def prox(self, x, delta=1.0):
         ret = super().prox(x.view(x.shape[0]*x.shape[1],-1), delta)
