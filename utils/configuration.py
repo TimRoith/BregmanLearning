@@ -1,8 +1,6 @@
 import torch
 import torch.nn.functional as F
-import adversarial_attacks as at
 import models
-
 
 class Conf:
     def __init__(self, **kwargs):
