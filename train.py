@@ -1,12 +1,12 @@
 # train step
-def train_step(conf, model, opt, train_loader):
+def train_step(conf, model, opt, train_loader, verbosity = 1):
     model.train()
     acc = 0
-    loss = 0.0
+    tot_loss = 0.0
     tot_steps = 0
     for batch_idx, (x, y) in enumerate(train_loader):
         # get batch data
-        x, y = x.to(device), y.to(device)
+        x, y = x.to(conf.device), y.to(conf.device)
         opt.zero_grad()
         logits = model(x)
         loss = conf.loss(logits, y)
@@ -14,15 +14,15 @@ def train_step(conf, model, opt, train_loader):
         loss.backward()
         opt.step()
         acc += (logits.max(1)[1] == y).sum().item()
-        loss += y.shape[0]*loss.item()
+        tot_loss += y.shape[0]*loss.item()
         tot_steps += y.shape[0]
 
     # print the current accuracy and loss
     if verbosity > 0: 
         print(50*"-")
         print('Train Accuracy:', acc/tot_steps)
-        print('Train Loss:', loss)
-    return {'loss':loss, 'acc':acc/tot_steps}
+        print('Train Loss:', tot_loss)
+    return {'loss':tot_loss, 'acc':acc/tot_steps}
 
 
 
@@ -62,14 +62,14 @@ def validation_step(conf, model, validation_loader, verbosity = 1):
 
 
 # test step
-def test(model,test_loader):
+def test(conf, model, test_loader):
     model.eval()
     acc = 0
     tot_steps = 0
     with torch.no_grad():
         for batch_idx, (x, y) in enumerate(test_loader):
             # get batch data
-            x, y = x.to(device), y.to(device)
+            x, y = x.to(conf.device), y.to(conf.device)
             # evaluate
             pred = model(x)
             acc += (pred.max(1)[1] == y).sum().item()
@@ -80,3 +80,28 @@ def test(model,test_loader):
         print(50*"-")
         print('Test Accuracy:', acc/tot_steps)
     return {'acc':acc/tot_steps}
+
+
+class best_model:
+    '''saves the best model'''
+    def __init__(self, best_model=None, gamma = 0.0, goal_acc = 0.0):
+        # stores best seen score and model
+        self.best_score = 0.0
+        
+        # if specified, a copy of the model gets saved into this variable
+        self.best_model = best_model
+
+        # score function
+        def score_fun(train_acc, test_acc):
+            return gamma * train_acc + (1-gamma) * test_acc + (train_acc > goal_acc)
+        self.score_fun = score_fun
+        
+    
+    def __call__(self, train_acc, val_acc, model=None):
+        # evaluate score
+        score = self.score_fun(train_acc, val_acc)
+        if score >= self.best_score:
+            self.best_score = score
+            # store model
+            if self.best_model is not None:
+                self.best_model.load_state_dict(model.state_dict())
