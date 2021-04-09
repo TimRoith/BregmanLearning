@@ -24,9 +24,6 @@ def train_step(conf, model, opt, train_loader, verbosity = 1):
         print('Train Loss:', tot_loss)
     return {'loss':tot_loss, 'acc':acc/tot_steps}
 
-
-
-
 # validation step
 def validation_step(conf, model, validation_loader, verbosity = 1):
     acc = 0.0
@@ -57,9 +54,6 @@ def validation_step(conf, model, validation_loader, verbosity = 1):
         print(50*"-")
         print('Validation Accuracy:', acc/tot_steps)
     return {'loss':loss, 'acc':acc/tot_steps}
-
-
-
 
 # test step
 def test(conf, model, test_loader):
