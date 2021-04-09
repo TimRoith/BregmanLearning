@@ -40,8 +40,8 @@ def get_fashion_mnist(conf):
     transform = transforms.Compose([transforms.ToTensor()])
     
     # train and test set
-    train = datasets.FashionMNIST(conf.data_file, train=True, download=False,transform=transform_train)
-    test = datasets.FashionMNIST(conf.data_file, train=False, download=False, transform=transforms_test)
+    train = datasets.FashionMNIST(conf.data_file, train=True, download=False,transform=transform)
+    test = datasets.FashionMNIST(conf.data_file, train=False, download=False, transform=transforms)
     
     # set imshape, mean and std for this dataset
     conf.im_shape = [1,28,28]
@@ -74,11 +74,13 @@ def train_valid_test_split(conf, train, test):
     total_count = len(train)
     train_count = int(conf.train_split * total_count)
     val_count = total_count - train_count
-    train, val = torch.utils.data.random_split(train, [train_count, val_count],generator=torch.Generator().manual_seed(42))
-
+    if val_count > 0:
+        train, val = torch.utils.data.random_split(train, [train_count, val_count],generator=torch.Generator().manual_seed(42))
+        valid_loader = DataLoader(val, batch_size=1000, shuffle=True, pin_memory=True, num_workers=conf.num_workers)
+    else:
+        valid_loader = None
 
     train_loader = DataLoader(train, batch_size=conf.batch_size, shuffle=True, pin_memory=True, num_workers=conf.num_workers)
-    valid_loader = DataLoader(val, batch_size=1000, shuffle=True, pin_memory=True, num_workers=conf.num_workers)
     test_loader = DataLoader(test, batch_size=1000, shuffle=False, pin_memory=True, num_workers=conf.num_workers)
 
     return train_loader, valid_loader, test_loader
