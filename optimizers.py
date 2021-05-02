@@ -108,6 +108,23 @@ class ProxSGD(torch.optim.Optimizer):
                 p.data.add_(-step_size * grad)
                 # proximal step
                 p.data = reg.prox(p.data, step_size)
+                
+    @torch.no_grad()
+    def evaluate_reg(self):
+        reg_vals = []
+        for group in self.param_groups:
+            group_reg_val = 0.0
+            # define regularizer for this group
+            reg = group['reg']
+            
+            # evaluate the reguarizer for each parametr in group
+            for p in group['params']:
+                group_reg_val += reg(p)
+                
+            # append the group reg val
+            reg_vals.append(group_reg_val)
+            
+        return reg_vals
                    
 # ------------------------------------------------------------------------------------------------------           
 class AdamBreg(torch.optim.Optimizer):
@@ -175,4 +192,71 @@ class AdamBreg(torch.optim.Optimizer):
     def initialize_sub_grad(self,p, reg, delta):
         p_init = p.data.clone()
         return 1/delta * p_init + reg.sub_grad(p_init)
+    
+    @torch.no_grad()
+    def evaluate_reg(self):
+        reg_vals = []
+        for group in self.param_groups:
+            group_reg_val = 0.0
+            delta = group['delta']
+            
+            # define regularizer for this group
+            reg = group['reg']
+            
+            # evaluate the reguarizer for each parametr in group
+            for p in group['params']:
+                group_reg_val += reg(p)
+                
+            # append the group reg val
+            reg_vals.append(group_reg_val)
+            
+        return reg_vals
+    
+    
+class lamda_scheduler:
+    '''scheduler for the regularization parameter'''
+    def __init__(self, opt,idx, warmup = 0, increment = 0.05, cooldown=0, target_sparse=1.0, reg_param ="mu"):
+        self.opt = opt
+        self.group = opt.param_groups[idx]
+        
+        # warm up
+        self.warmup = warmup
+        
+        # increment
+        self.increment = increment
+        
+        # cooldown
+        self.cooldown_val = cooldown
+        self.cooldown = cooldown
+        
+        # target
+        self.target_sparse = target_sparse
+        self.reg_param = reg_param
+         
+    def __call__(self, sparse, verbosity = 1):
+        # check if we are still in the warm up phase
+        if self.warmup > 0:
+            self.warmup -= 1
+        elif self.warmup == 0:
+            self.warmup = -1
+        else:
+            # cooldown 
+            if self.cooldown_val > 0:
+                self.cooldown_val -= 1 
+            else: # cooldown is over, time to update and reset cooldown
+                self.cooldown_val = self.cooldown
+
+                # discrepancy principle for lamda
+                if sparse > self.target_sparse:
+                    self.group['reg'].mu += self.increment
+                else:
+                    self.group['reg'].mu = max(self.group['reg'].mu - self.increment,0.0)
+                
+                # reset subgradients
+                for p in self.group['params']:   
+                    state = self.opt.state[p]
+                    state['sub_grad'] = self.opt.initialize_sub_grad(p, self.group['reg'],  self.group['delta'])
+                    
+        if verbosity > 0:
+            print('Lamda was set to:', self.group['reg'].mu, ', cooldown on:',self.cooldown_val)
     
