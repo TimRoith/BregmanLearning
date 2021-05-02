@@ -1,3 +1,6 @@
+import torch
+import models.aux_funs as maf
+
 # train step
 def train_step(conf, model, opt, train_loader, verbosity = 1):
     model.train()
@@ -24,39 +27,59 @@ def train_step(conf, model, opt, train_loader, verbosity = 1):
         print('Train Loss:', tot_loss)
     return {'loss':tot_loss, 'acc':acc/tot_steps}
 
+
+
+
 # validation step
-def validation_step(conf, model, validation_loader, verbosity = 1):
+def validation_step(conf, model, opt, validation_loader, opt_reg_eval = False, verbosity = 1):
     acc = 0.0
     loss = 0.0
     tot_steps = 0
-    
     # -------------------------------------------------------------------------
-    # loop over all batches
-    for batch_idx, (x, y) in enumerate(validation_loader):
-        # get batch data
-        x, y = x.to(conf.device), y.to(conf.device)
+    # evaluate on validation set
+    if not validation_loader is None:
+        for batch_idx, (x, y) in enumerate(validation_loader):
+            # get batch data
+            x, y = x.to(conf.device), y.to(conf.device)
 
-        # update x to a adverserial example
-        x = conf.attack(model, x, y)
-        
-         # evaluate model on batch
-        logits = model(x)
-        
-        # Get classification loss
-        c_loss = conf.loss(logits, y)
-        
-        acc += (logits.max(1)[1] == y).sum().item()
-        loss += c_loss.item()
-        tot_steps += y.shape[0]
-        
-    # print accuracy
+             # evaluate model on batch
+            logits = model(x)
+
+            # Get classification loss
+            c_loss = conf.loss(logits, y)
+
+            acc += (logits.max(1)[1] == y).sum().item()
+            loss += c_loss.item()
+            tot_steps += y.shape[0]
+        tot_acc = acc/tot_steps
+    else:
+        tot_acc = 0.0
+            
+    # ------------------------------------------------------------------------
+    # evaluate sparsity
+    conv_sparse = maf.conv_sparsity(model)
+    linear_sparse = maf.linear_sparsity(model)
+    
+    # ------------------------------------------------------------------------
+    # Evaluate L1 norm and append to history
+    reg_vals = []
+    if opt_reg_eval:
+        reg_vals = opt.evaluate_reg()
+         
+    # print values
     if verbosity > 0: 
         print(50*"-")
-        print('Validation Accuracy:', acc/tot_steps)
-    return {'loss':loss, 'acc':acc/tot_steps}
+        print('Validation Accuracy:', tot_acc)
+        print('Non-zero kernels:', conv_sparse)
+        print('Linear sparsity:', linear_sparse)
+        print('Regularization values per group:', reg_vals)
+    return {'loss':loss, 'acc':tot_acc, 'conv_sparse':conv_sparse, 'linear_sparse':linear_sparse,'reg_vals':reg_vals}
+
+
+
 
 # test step
-def test(conf, model, test_loader):
+def test(conf, model, test_loader, verbosity=1):
     model.eval()
     acc = 0
     tot_steps = 0
