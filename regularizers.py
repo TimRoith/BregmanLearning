@@ -15,6 +15,7 @@ class reg_l1:
         self.mu = mu
         
     def __call__(self, x):
+        # ToDO: Multiply with mu
         return torch.norm(x, p=1).item()
         
     def prox(self, x, delta=1.0):
@@ -29,6 +30,7 @@ class reg_l1_l2:
     def __init__(self, mu=1.0):
         self.mu = mu
         
+    #ToDo: incorporate mu in call
     def __call__(self, x):
         return torch.norm(torch.norm(x,p=2,dim=1), p=1).item()
         
