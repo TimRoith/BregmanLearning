@@ -1,5 +1,6 @@
 import torch
 import torch.nn.functional as F
+from torchvision import transforms
 import math
 import random
 from itertools import cycle
@@ -10,7 +11,7 @@ from models.mnist_conv import mnist_conv
 from models.fully_connected import fully_connected
 import models.aux_funs as maf
 import regularizers as reg
-from utils.datasets import data_set_info
+from utils.datasets import data_set_info, add_noise
 import train
 import optimizers as op
 
@@ -22,7 +23,8 @@ class Conf:
     def __init__(self, **kwargs):
         # CUDA settings
         self.use_cuda = kwargs.get('use_cuda', False)
-        self.device = torch.device("cuda" if self.use_cuda else "cpu")
+        self.cuda_device = kwargs.get('cuda_device', 0)
+        self.device = torch.device("cuda"+":"+str(self.cuda_device) if self.use_cuda else "cpu")
         self.num_workers = kwargs.get('num_workers', 0)
         
         # dataset
@@ -42,6 +44,7 @@ class Conf:
         
         # Loss function and norm
         self.loss = kwargs.get('loss', F.cross_entropy)
+        self.eval_acc = kwargs.get('eval_acc', True)
         
         # sparsity
         self.sparse_init = kwargs.get('sparse_init', 1.0)
@@ -120,7 +123,7 @@ def plain_example(data_file, use_cuda=False, num_workers=None):
     
     return conf
 
-def seed_torch(seed=1029):
+def seed_torch(seed=0):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -130,7 +133,7 @@ def seed_torch(seed=1029):
     torch.backends.cudnn.deterministic = True
 
 # -----------------------------------------------------------------------------------
-# Fashion_MNIST_CONV
+# MNIST_CONV
 # -----------------------------------------------------------------------------------
 def mnist_example(data_file, use_cuda=False, num_workers=None, 
                   mu=0.0, sparse_init=1.0, r = [5,10], lr=0.1, optim = "PSGD", beta = 0.0, delta = 1.0):
@@ -194,17 +197,105 @@ def mnist_example(data_file, use_cuda=False, num_workers=None,
     
     return conf, model, best_model, opt
 # -----------------------------------------------------------------------------------
+# MNIST_AUTOENCODER
+# -----------------------------------------------------------------------------------
+def mnist_autoencoder_example(data_file, use_cuda=False, num_workers=None, 
+                  mu=0.0, sparse_init=1.0, r = [5,10], lr=0.1, optim = "SGD", beta = 0.0, delta = 1.0):
+    if use_cuda and num_workers is None:
+        num_workers = 4
+    else:
+        num_workers = 0
+        
+    
+    conf_args = {'data_set': "Encoder-MNIST", 'data_file':data_file, 
+                 'use_cuda':use_cuda, 'train_split':0.95, 'num_workers':num_workers, 'epochs':100, 
+                 'sparse_init':sparse_init, 'eval_acc':False}
+    
+    # get configuration
+    conf = Conf(**conf_args)
+    
+#     def reshaped_mse_loss(x,y):
+#         kernel_size = 5
+#         sigma=(0.1, 2.0)
+#         x_aug = add_noise(std=0.2,device=conf.device)(x)
+#         return torch.nn.MSELoss()(x_aug,x.view(-1,28*28))
+
+    def reshaped_mse_loss(x,y):
+            return torch.nn.MSELoss()(x,y.view(-1,28*28))
+
+    conf.loss = reshaped_mse_loss
+
+    
+    # -----------------------------------------------------------------------------------
+    # define the model and an instance of the best model class
+    # -----------------------------------------------------------------------------------
+    sizes = 7*[784]
+    #act_fun = torch.nn.Sigmoid()
+    act_fun = torch.nn.ReLU()
+    #act_fun = torch.nn.Softplus(beta=1, threshold=20)
+    #act_fun = torch.nn.LeakyReLU(0.2)
+    
+    model = fully_connected(sizes, act_fun, mean = conf.data_set_mean, std = conf.data_set_std)
+    best_model = train.best_model(fully_connected(sizes, act_fun, mean = conf.data_set_mean, 
+                                                  std =conf.data_set_std).to(conf.device), goal_acc = conf.goal_acc)
+    
+    # sparsify
+    #maf.sparse_he_(model, 5.0)
+    maf.sparse_bias_uniform_(model, 0,r[0])
+    #maf.bias_constant_(model,r[0])
+    
+    maf.sparse_weight_normal_(model, r[1])
+    maf.sparsify_(model, conf.sparse_init, row_group = True)
+    model = model.to(conf.device)
+    
+    # -----------------------------------------------------------------------------------
+    # Get access to different model parameters
+    # -----------------------------------------------------------------------------------
+    weights_linear = maf.get_weights_linear(model)
+    biases = maf.get_bias(model)
+    
+    # -----------------------------------------------------------------------------------
+    # Initialize optimizer
+    # -----------------------------------------------------------------------------------
+    reg1 = reg.reg_l1_l2(mu=mu)
+    #reg1 =  reg.reg_l1(mu=mu)
+    
+    if optim == "SGD":
+        opt = torch.optim.SGD(model.parameters(), lr=lr, momentum=beta)
+    elif optim == "LinBreg":
+        opt = op.LinBreg([{'params': weights_linear, 'lr' : lr, 'reg' : reg1, 'momentum':beta, 'delta':delta},
+                          {'params': biases, 'lr': lr, 'momentum':beta}])
+    elif optim == "AdaBreg":
+        opt = op.AdamBreg([{'params': weights_linear, 'lr' : lr, 'reg' : reg1},
+                           {'params': biases, 'lr': lr}])
+    elif optim == "ProxSGD":
+        opt = op.ProxSGD([{'params': weights_linear, 'lr' : lr, 'reg' : reg1, 'momentum':beta,'delta':delta},
+                          {'params': biases, 'lr': lr, 'momentum':beta}])  
+    elif optim == "L1SGD":
+        def weight_reg(model):         
+            loss1 = 0
+            for w in maf.get_weights_linear(model):
+                loss1 += reg1(w)
+                
+            return loss1
+        
+        conf.weight_reg = weight_reg
+        
+        opt = torch.optim.SGD(model.parameters(), lr=lr, momentum=beta)
+    
+    return conf, model, best_model, opt
+# -----------------------------------------------------------------------------------
 # Fashion_MNIST_CONV
 # -----------------------------------------------------------------------------------
-def fashion_mnist_example(data_file, use_cuda=False, num_workers=None, mu=[0.0, 0.0], sparse_init=1.0,
-                          r = [5,10], lr=0.1, optim = "SGD", beta = 0.0, delta = 1.0):
+def fashion_mnist_example(data_file, use_cuda=False, num_workers=None, cuda_device=0, mu=[0.0, 0.0], sparse_init=1.0,
+                          r = [5,10], lr=0.1, optim = "SGD", beta = 0.0, delta = 1.0, conv_group=True):
     if use_cuda and num_workers is None:
         num_workers = 4
     else:
         num_workers = 0
     
     conf_args = {'data_set': "Fashion-MNIST", 'data_file':data_file, 
-                 'use_cuda':use_cuda, 'train_split':0.95, 'num_workers':num_workers,
+                 'use_cuda':use_cuda, 'train_split':0.95, 'num_workers':num_workers,'cuda_device':cuda_device,
                  'sparse_init':sparse_init}
 
     # get configuration
@@ -221,8 +312,9 @@ def fashion_mnist_example(data_file, use_cuda=False, num_workers=None, mu=[0.0, 
     maf.sparse_bias_uniform_(model, 0,r[0])
     maf.sparse_bias_uniform_(model, 0,r[0],ltype=torch.nn.Conv2d)
     maf.sparse_weight_normal_(model, r[1])
+    maf.sparse_weight_normal_(model, r[2],ltype=torch.nn.Conv2d)
     #
-    maf.sparsify_(model, conf.sparse_init)
+    maf.sparsify_(model, conf.sparse_init,conv_group=conv_group)
     model = model.to(conf.device)
     
     # -----------------------------------------------------------------------------------
@@ -235,37 +327,54 @@ def fashion_mnist_example(data_file, use_cuda=False, num_workers=None, mu=[0.0, 
     # -----------------------------------------------------------------------------------
     # Initialize optimizer
     # -----------------------------------------------------------------------------------
+    if conv_group:
+        reg2 = reg.reg_l1_l2_conv(mu=mu[0])
+    else:
+        reg2 = reg.reg_l1(mu=mu[0])
+    
     if optim == "SGD":
         opt = torch.optim.SGD(model.parameters(), lr=lr, momentum=beta)
     elif optim == "LinBreg":
-        opt = op.LinBreg([{'params': weights_conv, 'lr' : lr, 'reg' : reg.reg_l1_l2_conv(mu=mu[0]), 'momentum':beta},
-                          {'params': weights_linear, 'lr' : lr, 'reg' : reg.reg_l1(mu=mu[1]), 'momentum':beta},
+        opt = op.LinBreg([{'params': weights_conv, 'lr' : lr, 'reg' : reg2, 'momentum':beta,'delta':delta},
+                          {'params': weights_linear, 'lr' : lr, 'reg' : reg.reg_l1(mu=mu[1]), 'momentum':beta,'delta':delta},
                           {'params': biases, 'lr': lr, 'momentum':beta}])
     elif optim == "ProxSGD":
-        opt = op.ProxSGD([{'params': weights_conv, 'lr' : lr, 'reg' : reg.reg_l1_l2_conv(mu=mu[0]), 'momentum':beta},
-                          {'params': weights_linear, 'lr' : lr, 'reg' : reg.reg_l1(mu=mu[1]), 'momentum':beta},
+        opt = op.ProxSGD([{'params': weights_conv, 'lr' : lr, 'reg' : reg2, 'momentum':beta,'delta':delta},
+                          {'params': weights_linear, 'lr' : lr, 'reg' : reg.reg_l1(mu=mu[1]), 'momentum':beta,'delta':delta},
                           {'params': biases, 'lr': lr, 'momentum':beta}])            
     elif optim == "AdaBreg":
-        opt = op.AdamBreg([{'params': weights_conv, 'lr' : lr, 'reg' : reg.reg_l1_l2_conv(mu=mu[0])},
-                           {'params': weights_linear, 'lr' : lr, 'reg' : reg.reg_l1(mu=mu[1])},
+        opt = op.AdamBreg([{'params': weights_conv, 'lr' : lr, 'reg' : reg2,'delta':delta},
+                           {'params': weights_linear, 'lr' : lr, 'reg' : reg.reg_l1(mu=mu[1]),'delta':delta},
                            {'params': biases, 'lr': lr}])
+    elif optim == "L1SGD":
+        def weight_reg(model):
+            reg1 =  reg.reg_l1(mu=mu[1])
+        
+            loss1 = reg1(model.layers2[0].weight) + reg1(model.layers2[2].weight)
+            loss2 = reg2(model.layers1[0].weight) + reg2(model.layers1[3].weight)
+            return loss1 + loss2
+        
+        conf.weight_reg = weight_reg
+        
+        opt = torch.optim.SGD(model.parameters(), lr=lr, momentum=beta)
     else:
         raise ValueError("Unknown Optimizer specified")
     
     return conf, model, best_model, opt
 
 # -----------------------------------------------------------------------------------
-# Fashion_MNIST_CONV
+# CIFAR10
 # -----------------------------------------------------------------------------------
-def cifar10_example(data_file, use_cuda=False, num_workers=None, 
-                    r = [1.0,1.0], mu=[0.0, 0.0], sparse_init=1.0, lr= 0.1, beta=0.0, optim="SGD",delta=1.0):
+def cifar10_example(data_file, use_cuda=False, cuda_device=0, num_workers=None, 
+                    r = [1.0,1.0,1.0], mu=[0.0, 0.0], sparse_init=1.0, lr= 0.1, beta=0.0, optim="SGD",delta=1.0,conv_group=True):
     if use_cuda and num_workers is None:
         num_workers = 4
     else:
         num_workers = 0
     
     conf_args = {'data_set': "CIFAR10", 'data_file':data_file, 
-                 'use_cuda':use_cuda, 'train_split':0.95, 'num_workers':num_workers,
+                 'use_cuda':use_cuda, 'cuda_device': cuda_device,
+                 'train_split':0.95, 'num_workers':num_workers,
                  'sparse_init':sparse_init}
 
     # get configuration
@@ -278,11 +387,13 @@ def cifar10_example(data_file, use_cuda=False, num_workers=None,
     model = ResNet18(mean = conf.data_set_mean, std = conf.data_set_std)
     best_model = train.best_model(ResNet18(mean = conf.data_set_mean, std = conf.data_set_std).to(conf.device), goal_acc = conf.goal_acc)
     
+    
     # sparsify
-    maf.sparse_bias_uniform_(model, 0,r[0])
+    #maf.sparse_bias_uniform_(model, 0,r[0])
     maf.sparse_weight_normal_(model, r[1])
+    maf.sparse_weight_normal_(model, r[2],ltype=torch.nn.Conv2d)
     #
-    maf.sparsify_(model, conf.sparse_init)
+    maf.sparsify_(model, conf.sparse_init,conv_group=conv_group)
     model = model.to(conf.device)
     
     # -----------------------------------------------------------------------------------
@@ -296,18 +407,40 @@ def cifar10_example(data_file, use_cuda=False, num_workers=None,
     # -----------------------------------------------------------------------------------
     # Initialize optimizer
     # -----------------------------------------------------------------------------------
+    if conv_group:
+        reg2 = reg.reg_l1_l2_conv(mu=mu[0])
+    else:
+        reg2 = reg.reg_l1(mu=mu[0])
+        
     if optim == "SGD":
         opt = torch.optim.SGD(model.parameters(), lr=lr, momentum=beta)
     elif optim == "LinBreg":
-        opt = op.LinBreg([{'params': weights_conv, 'lr' : lr, 'reg' : reg.reg_l1_l2_conv(mu=mu[0]), 'momentum':beta},
+        opt = op.LinBreg([{'params': weights_conv, 'lr' : lr, 'reg' : reg2, 'momentum':beta},
                           {'params': weights_linear, 'lr' : lr, 'reg' : reg.reg_l1(mu=mu[1]), 'momentum':beta},
                           {'params': weights_batch, 'lr' : lr, 'momentum':beta},
                           {'params': biases, 'lr': lr, 'momentum':beta}])
     elif optim == "AdaBreg":
-        opt = op.AdamBreg([{'params': weights_conv, 'lr' : lr, 'reg' : reg.reg_l1_l2_conv(mu=mu[0])},
+        opt = op.AdamBreg([{'params': weights_conv, 'lr' : lr, 'reg' : reg2},
                            {'params': weights_linear, 'lr' : lr, 'reg' : reg.reg_l1(mu=mu[1])},
                            {'params': weights_batch, 'lr' : lr, 'momentum':beta},
                            {'params': biases, 'lr': lr}])
+    elif optim == "L1SGD":
+        def weight_reg(model):
+            reg1 =  reg.reg_l1(mu=mu[1])
+            
+            loss2 = 0
+            for w in maf.get_weights_conv(model):
+                loss2 += reg2(w)
+                
+            loss1 = 0
+            for w in maf.get_weights_linear(model):
+                loss1 += reg1(w)
+                
+            return loss1 + loss2
+        
+        conf.weight_reg = weight_reg
+        
+        opt = torch.optim.SGD(model.parameters(), lr=lr, momentum=beta)
     else:
         raise ValueError("Unknown Optimizer specified")
     
