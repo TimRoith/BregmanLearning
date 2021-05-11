@@ -1,4 +1,3 @@
-# Various torch packages
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -19,12 +18,7 @@ data_file = "../Data"
 # -----------------------------------------------------------------------------------
 # Parameters for different runs
 # -----------------------------------------------------------------------------------
-#sis = [0.0, 0.001, 0.005, 0.01, 0.05, 0.1,0.5,1.0]
 sis = [0.01]
-#mus = [[0.0, 0.0], [0.001, 0.01],[0.005,0.05],[0.01, 0.1], [0.02,0.2], [0.03,0.3],[0.06,0.6],[0.1,0.8]]
-#mus = [0.0, 0.001, 0.01, 0.04, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0, 1.5, 2.0, 5.0, 7.0, 10.0]
-#mus = [0.0, 0.00001, 0.0001, 0.001,0.01,0.1]
-
 mus = [0.1]
 runs = cf.run(**{'mu':mus, 'sparse_init':sis, 'num_runs':max(len(sis),len(mus)), 'repitions':1})
 # -----------------------------------------------------------------------------------
@@ -32,20 +26,14 @@ runs = cf.run(**{'mu':mus, 'sparse_init':sis, 'num_runs':max(len(sis),len(mus)),
 # -----------------------------------------------------------------------------------
 cf.seed_torch(0)
 while runs.step():
-    
     mu = runs.mu
     sparse_init = runs.sparse_init
-    #r = [1, mu/sparse_init]
-    print(sparse_init)
-    
-    r = [1,1]
-    lr = 0.1
-    #lr = 0.1
-    #ll = (mu+math.sqrt(sparse_init))/(mu+1)
-    ll=1
+    r = [1,1,1]
+    ll=0.5
     rr = ll/math.sqrt(sparse_init+0.001)
-    r[0] = 2
+    r[0] = 1
     r[1] = rr
+    r[2] = rr
     
     print("Using mu:",mu)
     print("Using r:",r[0],r[1])
@@ -53,17 +41,9 @@ while runs.step():
     # -----------------------------------------------------------------------------------
     # Set up configuration, obtain model and optimizer
     # -----------------------------------------------------------------------------------
-    #conf, model, best_model, opt = cf.fashion_mnist_example(data_file, use_cuda=True, mu=mu,sparse_init=sparse_init)
-#     conf, model, best_model, opt = cf.mnist_example(data_file, use_cuda=True, 
-#                                                     mu=mu,sparse_init=sparse_init, r = r,lr=lr,optim="LinBreg",
-#                                                     beta=0.0,delta=1.0)
-    #mu = [0.34,0.9] # for adam
-    #mu = [0.34,0.9] # for linbreg
-    mu = [0.1,0.1]
-    
-    conf, model, best_model, opt = cf.cifar10_example(data_file, use_cuda=True, 
-                                                    mu=mu,sparse_init=sparse_init, r = r,lr=lr,optim="LinBreg",
-                                                    beta=0.0,delta=1.0)
+    conf, model, best_model, opt = cf.cifar10_example(data_file, use_cuda=True, cuda_device=1,
+                                                    mu=mu,sparse_init=sparse_init, r = r,lr=lr,optim="AdaBreg",
+                                                    beta=0.9,delta=50.0,conv_group=False)
     
     # get train, validation and test loader
     train_loader, valid_loader, test_loader = get_data_set(conf)
