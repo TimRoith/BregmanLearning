@@ -1,4 +1,5 @@
 import torch
+import torch.nn.utils.prune as prune
 import models.aux_funs as maf
 
 # train step
@@ -14,9 +15,17 @@ def train_step(conf, model, opt, train_loader, verbosity = 1):
         logits = model(x)
         loss = conf.loss(logits, y)
         
+        if hasattr(conf,"weight_reg"):
+            loss += conf.weight_reg(model)
+            
+        
         loss.backward()
         opt.step()
-        acc += (logits.max(1)[1] == y).sum().item()
+        
+        # for classification tasks we want to evaluate the accuracy
+        if conf.eval_acc:
+            acc += (logits.max(1)[1] == y).sum().item()
+        
         tot_loss += y.shape[0]*loss.item()
         tot_steps += y.shape[0]
 
@@ -47,8 +56,9 @@ def validation_step(conf, model, opt, validation_loader, opt_reg_eval = False, v
 
             # Get classification loss
             c_loss = conf.loss(logits, y)
-
-            acc += (logits.max(1)[1] == y).sum().item()
+            
+            if conf.eval_acc:
+                acc += (logits.max(1)[1] == y).sum().item()
             loss += c_loss.item()
             tot_steps += y.shape[0]
         tot_acc = acc/tot_steps
@@ -59,6 +69,8 @@ def validation_step(conf, model, opt, validation_loader, opt_reg_eval = False, v
     # evaluate sparsity
     conv_sparse = maf.conv_sparsity(model)
     linear_sparse = maf.linear_sparsity(model)
+    net_sparse = maf.net_sparsity(model)
+    node_sparse = maf.node_sparsity(model)
     
     # ------------------------------------------------------------------------
     # Evaluate L1 norm and append to history
@@ -72,8 +84,13 @@ def validation_step(conf, model, opt, validation_loader, opt_reg_eval = False, v
         print('Validation Accuracy:', tot_acc)
         print('Non-zero kernels:', conv_sparse)
         print('Linear sparsity:', linear_sparse)
+        print('Overall sparsity:', net_sparse)
+        print('Node sparsity:', node_sparse)
+        
+        
         print('Regularization values per group:', reg_vals)
-    return {'loss':loss, 'acc':tot_acc, 'conv_sparse':conv_sparse, 'linear_sparse':linear_sparse,'reg_vals':reg_vals}
+    return {'loss':loss, 'acc':tot_acc, 'conv_sparse':conv_sparse, 'linear_sparse':linear_sparse,
+            'reg_vals':reg_vals,'node_sparse':node_sparse}
 
 
 
@@ -89,7 +106,8 @@ def test(conf, model, test_loader, verbosity=1):
             x, y = x.to(conf.device), y.to(conf.device)
             # evaluate
             pred = model(x)
-            acc += (pred.max(1)[1] == y).sum().item()
+            if conf.eval_acc:
+                acc += (pred.max(1)[1] == y).sum().item()
             tot_steps += y.shape[0]
     
     # print accuracy
@@ -97,6 +115,23 @@ def test(conf, model, test_loader, verbosity=1):
         print(50*"-")
         print('Test Accuracy:', acc/tot_steps)
     return {'acc':acc/tot_steps}
+
+# ------------------------------------------------------------------------
+# Pruning step
+def prune_step(model, a1 = 0.01, a2 = 0.01, conv_group=True):
+    for name, module in model.named_modules():
+        if isinstance(module, torch.nn.Conv2d) and conv_group:
+            prune.ln_structured(module, name='weight', amount=a1,n=2,dim=0)
+            prune.ln_structured(module, name='weight', amount=a1,n=2,dim=1)
+            
+            #prune.remove(module, name='weight')
+        elif isinstance(module, torch.nn.Linear) or isinstance(module, torch.nn.Conv2d):
+            prune.l1_unstructured(module, name='weight', amount=a2)
+            
+            #prune.remove(module, name='weight')
+            
+        
+            
 
 
 class best_model:
