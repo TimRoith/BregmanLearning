@@ -15,8 +15,7 @@ class reg_l1:
         self.mu = mu
         
     def __call__(self, x):
-        # ToDO: Multiply with mu
-        return torch.norm(x, p=1).item()
+        return self.mu * torch.norm(x, p=1)
         
     def prox(self, x, delta=1.0):
         return torch.sign(x) * torch.clamp(torch.abs(x) - (delta * self.mu),min=0)
@@ -32,7 +31,7 @@ class reg_l1_l2:
         
     #ToDo: incorporate mu in call
     def __call__(self, x):
-        return torch.norm(torch.norm(x,p=2,dim=1), p=1).item()
+        return self.mu * torch.sqrt(torch.tensor(x.shape[-1])) * torch.norm(torch.norm(x,p=2,dim=1), p=1)
         
     def prox(self, x, delta=1.0):
         thresh = delta*self.mu
@@ -48,11 +47,13 @@ class reg_l1_l2:
     
         
     def sub_grad(self, x):
+        thresh = self.mu * torch.sqrt(torch.tensor(x.shape[-1]))
+        #
         nx = torch.norm(x,p=2,dim=1).view(x.shape[0],1)      
         ind = torch.where((nx!=0))[0]
         ret = torch.clone(x)
         ret[ind] = x[ind]/nx[ind]
-        return self.mu * ret
+        return thresh * ret
     
 # subclass for convolutional kernels
 class reg_l1_l2_conv(reg_l1_l2):
@@ -89,3 +90,18 @@ class reg_l1_l1_l2:
     
     def sub_grad(self, x):
         return self.mu * (self.l1.sub_grad(x) + self.l1_l2.sub_grad(x))
+    
+class reg_soft_bernoulli:
+    def __init__(self,mu=1.0):
+        self.mu = mu
+        
+        
+    def prox(self, x, delta=1.0):
+        c = (torch.tanh(torch.abs(x) - (delta * self.mu)) + 1)/2
+        return torch.sign(x) * torch.bernoulli(c)
+#     def prox(self, x, delta=1.0):
+#         x_max = torch.max(torch.abs(x))
+#         return torch.bernoulli(torch.abs(x)/x_max) * x
+    
+    def sub_grad(self, v):
+        return self.mu * torch.sign(v)
