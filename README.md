@@ -25,7 +25,7 @@ where
 
 Our algorithm is based on linearized Bregman iterations [[2]](#2) and is a simple extension of stochastic gradient descent which is recovered choosing <img src="https://latex.codecogs.com/svg.latex?J=0" title="Jzero"/>. We also provide accelerations of our baseline algorithm using momentum and Adam [[3]](#3). 
 
-The auxilliary variable <img src="https://latex.codecogs.com/svg.latex?v" title="v"/> is a subgradient of <img src="https://latex.codecogs.com/svg.latex?\theta" title="weights"/> with respect to the *elastic net* functional 
+The variable <img src="https://latex.codecogs.com/svg.latex?v" title="v"/> is a subgradient of <img src="https://latex.codecogs.com/svg.latex?\theta" title="weights"/> with respect to the *elastic net* functional 
 
 <p align="center">
       <img src="https://latex.codecogs.com/svg.latex?J_\delta(\theta)=J(\theta)+\frac1\delta\|\theta\|^2." title="el-net"/>
