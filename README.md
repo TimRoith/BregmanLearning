@@ -31,6 +31,8 @@ The auxilliary variable <img src="https://latex.codecogs.com/svg.latex?v" title=
       <img src="https://latex.codecogs.com/svg.latex?J_\delta(\theta)=J(\theta)+\frac1\delta\|\theta\|^2." title="el-net"/>
 </p>
 
+and stores the information which parameters are non-zero.
+
 ## Initialization
 
 We use a *sparse initialization strategy* by initializing parameters non-zero with a small probability.
