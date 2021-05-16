@@ -20,19 +20,19 @@ Our Bregman learning framework aims at training sparse neural networks in an inv
 
 parametrized by weights <img src="https://latex.codecogs.com/svg.latex?\theta" title="weights"/> using the simple baseline algorithm
 <p align="center">
-      <img src="https://latex.codecogs.com/svg.latex?\begin{cases}v\gets\,v-\tau\mathcal{L}(\theta),\\\theta\gets\mathrm{prox}_{\delta\,J}(\delta\,v),\end{cases}" title="Update" />
+      <img src="https://latex.codecogs.com/svg.latex?\begin{cases}v\gets\,v-\tau\hat{\nabla}\mathcal{L}(\theta),\\\theta\gets\mathrm{prox}_{\delta\,J}(\delta\,v),\end{cases}" title="Update" />
 </p>
 
 where 
-* <img src="https://latex.codecogs.com/svg.latex?\mathcal{L}" title="loss"/> denotes a loss function,
-* <img src="https://latex.codecogs.com/svg.latex?\mathrm{prox}" title="prox"/> is the proximal operator, and
-* <img src="https://latex.codecogs.com/svg.latex?\mathrm{prox}" title="J"/> is a sparsity-enforcing functional, e.g., the <img src="https://latex.codecogs.com/svg.latex?\ell_1" title="ell1"/>-norm.
+* <img src="https://latex.codecogs.com/svg.latex?\mathcal{L}" title="loss"/> denotes a loss function with stochastic gradient <img src="https://latex.codecogs.com/svg.latex?\hat{\nabla}\mathcal{L}" title="stochgrad"/>,
+* <img src="https://latex.codecogs.com/svg.latex?J" title="J"/> is a sparsity-enforcing functional, e.g., the <img src="https://latex.codecogs.com/svg.latex?\ell_1" title="ell1"/>-norm,
+* <img src="https://latex.codecogs.com/svg.latex?\mathrm{prox}_{\delta\,J}" title="prox"/> is the proximal operator of <img src="https://latex.codecogs.com/svg.latex?J" title="J"/>.
+
+Our algorithm is based on linearized Bregman iterations [[2]](#2) and is a simple extension of stochastic gradient descent which is recovered choosing <img src="https://latex.codecogs.com/svg.latex?J=0" title="Jzero"/>. We also provide accelerations of our baseline algorithm using momentum and Adam [[3]](#3). 
 
 ## References
 <a id="1">[1]</a> Leon Bungert, Tim Roith, Daniel Tenbrinck, Martin Burger. "A Bregman Learning Framework for Sparse Neural Networks." arXiv preprint arXiv:2105.04319 (2021). https://arxiv.org/abs/2105.04319
 
-<a id="2">[2]</a> The Pytorch website https://pytorch.org/, see also their git https://github.com/pytorch/pytorch
+<a id="2">[2]</a> Woatao Yin, Stanley Osher, Donald Goldfarb, Jerome Darbon. "Bregman iterative algorithms for \ell_1-minimization with applications to compressed sensing." SIAM Journal on Imaging sciences 1.1 (2008): 143-168.
 
-<a id="3">[3]</a> The MNIST dataset http://yann.lecun.com/exdb/mnist/
-
-<a id="4">[4]</a> The Fashion-MNIST dataset  https://research.zalando.com/welcome/mission/research-projects/fashion-mnist/
+<a id="3">[3]</a> Diederik Kingma, Jimmy Lei Ba. "Adam: A Method for Stochastic Optimization." arXiv preprint arXiv:1412.6980 (2014). https://arxiv.org/abs/1412.6980
