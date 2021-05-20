@@ -12,7 +12,7 @@ Feel free to use it and please refer to our paper when doing so.
 }
 ```
 
-## Method Description
+## 💡 Method Description
 Our Bregman learning framework aims at training sparse neural networks in an inverse scale space manner, starting with very few parameters and gradually adding only relevant parameters during training. We train a neural network <img src="https://latex.codecogs.com/svg.latex?f_\theta:\mathcal{X}\rightarrow\mathcal{Y}" title="net"/> parametrized by weights <img src="https://latex.codecogs.com/svg.latex?\theta" title="weights"/> using the simple baseline algorithm
 <p align="center">
       <img src="https://latex.codecogs.com/svg.latex?\begin{cases}v\gets\,v-\tau\hat{\nabla}\mathcal{L}(\theta),\\\theta\gets\mathrm{prox}_{\delta\,J}(\delta\,v),\end{cases}" title="Update" />
@@ -33,12 +33,12 @@ The variable <img src="https://latex.codecogs.com/svg.latex?v" title="v"/> is a 
 
 and stores the information which parameters are non-zero.
 
-## Initialization
+## 🎲 Initialization
 
 We use a *sparse initialization strategy* by initializing parameters non-zero with a small probability.
 Their variance is chosen to avoid vanishing or exploding gradients, generalizing Kaiming-He or Xavier initialization.
 
-## References
+## 📝 References
 <a id="1">[1]</a> Leon Bungert, Tim Roith, Daniel Tenbrinck, Martin Burger. "A Bregman Learning Framework for Sparse Neural Networks." arXiv preprint arXiv:2105.04319 (2021). https://arxiv.org/abs/2105.04319
 
 <a id="2">[2]</a> Woatao Yin, Stanley Osher, Donald Goldfarb, Jerome Darbon. "Bregman iterative algorithms for \ell_1-minimization with applications to compressed sensing." SIAM Journal on Imaging sciences 1.1 (2008): 143-168.
