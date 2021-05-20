@@ -1,4 +1,4 @@
-# BregmanLearning
+# 📈 BregmanLearning
 Implementation of the inverse scale space training algorithms for sparse neural networks, proposed in **A Bregman Learning Framework for Sparse Neural Networks** [[1]](#1).
 Feel free to use it and please refer to our paper when doing so.
 ```
