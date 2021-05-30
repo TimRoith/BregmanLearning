@@ -28,7 +28,7 @@ Our algorithm is based on linearized Bregman iterations [[2]](#2) and is a simpl
 The variable <img src="https://latex.codecogs.com/svg.latex?v" title="v"/> is a subgradient of <img src="https://latex.codecogs.com/svg.latex?\theta" title="weights"/> with respect to the *elastic net* functional 
 
 <p align="center">
-      <img src="https://latex.codecogs.com/svg.latex?J_\delta(\theta)=J(\theta)+\frac1\delta\|\theta\|^2." title="el-net"/>
+      <img src="https://latex.codecogs.com/svg.latex?J_\delta(\theta)=J(\theta)+\frac1\delta\|\theta\|^2" title="el-net"/>
 </p>
 
 and stores the information which parameters are non-zero.
