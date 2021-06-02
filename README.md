@@ -43,6 +43,12 @@ Their variance is chosen to avoid vanishing or exploding gradients, generalizing
 ### Classification
 <img src="https://user-images.githubusercontent.com/44805883/120520997-bdd0e880-c3d4-11eb-9743-166b097fe70b.png" width="700">
 
+#### Linear Layers
+
+#### Convolutions and Group Sparsity
+
+#### ResNet
+
 
 ### NAS
 <img src="https://user-images.githubusercontent.com/44805883/120520730-70547b80-c3d4-11eb-94f8-df36e24ad778.png" width="700">
