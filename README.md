@@ -11,6 +11,9 @@ Feel free to use it and please refer to our paper when doing so.
       primaryClass={cs.LG}
 }
 ```
+<p align="center">
+      <img src="https://user-images.githubusercontent.com/44805883/120522872-99294080-c3d5-11eb-9b9d-48809054be15.png" width="600">
+</p>
 
 ## 💡 Method Description
 Our Bregman learning framework aims at training sparse neural networks in an inverse scale space manner, starting with very few parameters and gradually adding only relevant parameters during training. We train a neural network <img src="https://latex.codecogs.com/svg.latex?f_\theta:\mathcal{X}\rightarrow\mathcal{Y}" title="net"/> parametrized by weights <img src="https://latex.codecogs.com/svg.latex?\theta" title="weights"/> using the simple baseline algorithm
