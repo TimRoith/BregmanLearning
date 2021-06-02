@@ -44,7 +44,10 @@ Their variance is chosen to avoid vanishing or exploding gradients, generalizing
 ## 🔬 Experiments
 
 ### Classification
-<img src="https://user-images.githubusercontent.com/44805883/120520997-bdd0e880-c3d4-11eb-9743-166b097fe70b.png" width="700">
+
+<p align="center">
+      <img src="https://user-images.githubusercontent.com/44805883/120520997-bdd0e880-c3d4-11eb-9743-166b097fe70b.png" width="700">
+</p>
 
 #### Linear Layers
 
@@ -54,8 +57,10 @@ Their variance is chosen to avoid vanishing or exploding gradients, generalizing
 
 
 ### NAS
-<img src="https://user-images.githubusercontent.com/44805883/120520730-70547b80-c3d4-11eb-94f8-df36e24ad778.png" width="700">
 
+<p align="center">
+      <img src="https://user-images.githubusercontent.com/44805883/120520730-70547b80-c3d4-11eb-94f8-df36e24ad778.png" width="700">
+</p>
 
 ## 📝 References
 <a id="1">[1]</a> Leon Bungert, Tim Roith, Daniel Tenbrinck, Martin Burger. "A Bregman Learning Framework for Sparse Neural Networks." arXiv preprint arXiv:2105.04319 (2021). https://arxiv.org/abs/2105.04319
