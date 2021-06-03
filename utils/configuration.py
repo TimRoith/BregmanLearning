@@ -15,80 +15,100 @@ from utils.datasets import data_set_info, add_noise
 import train
 import optimizers as op
 
+# -----
+import os.path
+import csv
+
 # numpy
 import numpy as np
 
 
 class Conf:
     def __init__(self, **kwargs):
-        # CUDA settings
-        self.use_cuda = kwargs.get('use_cuda', False)
-        self.cuda_device = kwargs.get('cuda_device', 0)
-        self.device = torch.device("cuda"+":"+str(self.cuda_device) if self.use_cuda else "cpu")
-        self.num_workers = kwargs.get('num_workers', 0)
+        # ----------------------------------------
+        # set defaults
+        # ----------------------------------------
+        # cuda
+        self.use_cuda = False
+        self.num_workers = 0
+        self.cuda_device = 0
         
         # dataset
-        self.data_set = kwargs.get('data_set', "MNIST")
-        self.data_file = kwargs.get('data_file', "data")
-        self.train_split = kwargs.get('train_split', 1.0)
-        # dataset info
+        self.data_set = "MNIST"
+        self.data_file = ""
+        self.train_split = 1.0
+        
+        # loss function
+        self.loss = F.cross_entropy
+        
+        # misc
+        self.eval_acc = True
+ 
+        # specification for Training
+        self.epochs = 100
+        self.batch_size = 128
+        self.lr = 0.1
+        self.sparse_init = 1.0
+        
+        # ----------------------------------------
+        # set all kwargs
+        # ----------------------------------------
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        # ----------------------------------------
+        
+        # Set device
+        self.device = torch.device("cuda"+":"+str(self.cuda_device) if self.use_cuda else "cpu")
+        
+        # additonal dataset info
         im_shape, mean, std = data_set_info(self.data_set,self.device)
         self.im_shape = im_shape
         self.data_set_mean = mean
         self.data_set_std = std
-        # min and max of pictures
         self.x_min = 0.0
         self.x_max = 1.0
-        
 
-        
-        # Loss function and norm
-        self.loss = kwargs.get('loss', F.cross_entropy)
-        self.eval_acc = kwargs.get('eval_acc', True)
-        
-        # sparsity
-        self.sparse_init = kwargs.get('sparse_init', 1.0)
-        
-        # -----------------------------
-        self.goal_acc = kwargs.get('goal_accuracy', 0.0)
- 
-        # specification for Training
-        self.epochs = kwargs.get('epochs', 100)
-        self.batch_size = kwargs.get('batch_size', 128)
-        self.lr = kwargs.get('lr', 0.1)
-            
-           
-        
+    def write_to_csv(self):
+        idx = 0
+        log_file = 'ex_results/'+self.super_type+'/'+self.name+'_'+str(idx)+'.csv'
+        while os.path.isfile(log_file):
+            idx += 1
+            log_file = 'ex_results/'+self.super_type+'/'+self.name+'_'+str(idx)+'.csv'
+    
+        self.ID = idx
+    
+        with open(log_file, mode='w') as res_file:
+            res_writer = csv.writer(res_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            v_conf = vars(self)
+
+            key_loc = list(v_conf.keys())
+            res_writer.writerow(key_loc)
+
+            values = []
+            for key in key_loc:
+                values.append(str(v_conf[key]))
+            res_writer.writerow(values)
         
 class run:
     def __init__(self,**kwargs):
         self.num_runs = kwargs.get('num_runs', 5)
         self.run_iter = 0
-        self.rep = 0
         
-        # mu and sparse init
-        self.mus = cycle(kwargs.get('mu', [0.1]))
-        self.sparse_inits = cycle(kwargs.get('sparse_init', [0.01]))
-        self.rs = cycle(kwargs.get('r', [[5,10]]))
+        # ----------------------------------------
+        # set all kwargs
+        # ----------------------------------------
+        for key, value in kwargs.items():
+            if not key == "num_runs":
+                setattr(self, key+"_list", cycle(value))
+        # ----------------------------------------
         
-        self.repitions = kwargs.get('repitions', 1)
         # history
         self.run_history = []
         
     def step(self):
-        if self.rep == 0:
-            self.run_iter += 1
-        
         if self.run_iter <= self.num_runs:
-            if self.rep == 0 :
-                self.run_history.append({})
-                self.mu = next(self.mus)
-                self.sparse_init = next(self.sparse_inits)
-                self.r = next(self.rs)
-               
-            # update repition counter
-            self.rep = (self.rep + 1)%self.repitions
-
+            self.run_history.append({})
+            self.run_iter += 1
             return True
         else:
             return False
@@ -97,11 +117,9 @@ class run:
         for key in hist:
             loc_key = name + "_"+ key
             rs_loc = self.run_history[self.run_iter-1]
-            if loc_key not in rs_loc:
-                rs_loc[loc_key] = torch.zeros((len(hist[key]),self.repitions))
             
             # add to history   
-            rs_loc[loc_key][:,self.rep-1] = torch.FloatTensor(hist[key])
+            rs_loc[loc_key] = hist[key]
              
             
         
@@ -352,90 +370,6 @@ def fashion_mnist_example(data_file, use_cuda=False, num_workers=None, cuda_devi
         
             loss1 = reg1(model.layers2[0].weight) + reg1(model.layers2[2].weight)
             loss2 = reg2(model.layers1[0].weight) + reg2(model.layers1[3].weight)
-            return loss1 + loss2
-        
-        conf.weight_reg = weight_reg
-        
-        opt = torch.optim.SGD(model.parameters(), lr=lr, momentum=beta)
-    else:
-        raise ValueError("Unknown Optimizer specified")
-    
-    return conf, model, best_model, opt
-
-# -----------------------------------------------------------------------------------
-# CIFAR10
-# -----------------------------------------------------------------------------------
-def cifar10_example(data_file, use_cuda=False, cuda_device=0, num_workers=None, 
-                    r = [1.0,1.0,1.0], mu=[0.0, 0.0], sparse_init=1.0, lr= 0.1, beta=0.0, optim="SGD",delta=1.0,conv_group=True):
-    if use_cuda and num_workers is None:
-        num_workers = 4
-    else:
-        num_workers = 0
-    
-    conf_args = {'data_set': "CIFAR10", 'data_file':data_file, 
-                 'use_cuda':use_cuda, 'cuda_device': cuda_device,
-                 'train_split':0.95, 'num_workers':num_workers,
-                 'sparse_init':sparse_init}
-
-    # get configuration
-    conf = Conf(**conf_args)
-
-    
-    # -----------------------------------------------------------------------------------
-    # define the model and an instance of the best model class
-    # -----------------------------------------------------------------------------------
-    model = ResNet18(mean = conf.data_set_mean, std = conf.data_set_std)
-    best_model = train.best_model(ResNet18(mean = conf.data_set_mean, std = conf.data_set_std).to(conf.device), goal_acc = conf.goal_acc)
-    
-    
-    # sparsify
-    #maf.sparse_bias_uniform_(model, 0,r[0])
-    maf.sparse_weight_normal_(model, r[1])
-    maf.sparse_weight_normal_(model, r[2],ltype=torch.nn.Conv2d)
-    #
-    maf.sparsify_(model, conf.sparse_init,conv_group=conv_group)
-    model = model.to(conf.device)
-    
-    # -----------------------------------------------------------------------------------
-    # Get access to different model parameters
-    # -----------------------------------------------------------------------------------
-    weights_conv = maf.get_weights_conv(model)
-    weights_linear = maf.get_weights_linear(model)
-    weights_batch = maf.get_weights_batch(model)
-    biases = maf.get_bias(model)
-    
-    # -----------------------------------------------------------------------------------
-    # Initialize optimizer
-    # -----------------------------------------------------------------------------------
-    if conv_group:
-        reg2 = reg.reg_l1_l2_conv(mu=mu[0])
-    else:
-        reg2 = reg.reg_l1(mu=mu[0])
-        
-    if optim == "SGD":
-        opt = torch.optim.SGD(model.parameters(), lr=lr, momentum=beta)
-    elif optim == "LinBreg":
-        opt = op.LinBreg([{'params': weights_conv, 'lr' : lr, 'reg' : reg2, 'momentum':beta},
-                          {'params': weights_linear, 'lr' : lr, 'reg' : reg.reg_l1(mu=mu[1]), 'momentum':beta},
-                          {'params': weights_batch, 'lr' : lr, 'momentum':beta},
-                          {'params': biases, 'lr': lr, 'momentum':beta}])
-    elif optim == "AdaBreg":
-        opt = op.AdamBreg([{'params': weights_conv, 'lr' : lr, 'reg' : reg2},
-                           {'params': weights_linear, 'lr' : lr, 'reg' : reg.reg_l1(mu=mu[1])},
-                           {'params': weights_batch, 'lr' : lr, 'momentum':beta},
-                           {'params': biases, 'lr': lr}])
-    elif optim == "L1SGD":
-        def weight_reg(model):
-            reg1 =  reg.reg_l1(mu=mu[1])
-            
-            loss2 = 0
-            for w in maf.get_weights_conv(model):
-                loss2 += reg2(w)
-                
-            loss1 = 0
-            for w in maf.get_weights_linear(model):
-                loss1 += reg1(w)
-                
             return loss1 + loss2
         
         conf.weight_reg = weight_reg
