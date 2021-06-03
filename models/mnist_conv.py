@@ -31,6 +31,7 @@ class mnist_conv(nn.Module):
         self.layers2.append(self.act_fn)
 
         self.layers2.append(self.linear(128, 10))
+        #self.layers2.append(torch.nn.Softmax(dim=1))        
 
         self.layers1 = nn.Sequential(*self.layers1)
         self.layers2 = nn.Sequential(*self.layers2)
