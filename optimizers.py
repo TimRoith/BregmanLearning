@@ -127,13 +127,13 @@ class ProxSGD(torch.optim.Optimizer):
         return reg_vals
                    
 # ------------------------------------------------------------------------------------------------------           
-class AdamBreg(torch.optim.Optimizer):
+class AdaBreg(torch.optim.Optimizer):
     def __init__(self,params,lr=1e-3,reg=reg.reg_none(), delta=1.0, betas=(0.9, 0.999), eps=1e-8):
         if lr < 0.0:
             raise ValueError("Invalid learning rate")
             
         defaults = dict(lr=lr, reg=reg, delta=delta, betas=betas, eps=eps)
-        super(AdamBreg, self).__init__(params, defaults)
+        super(AdaBreg, self).__init__(params, defaults)
         
     @torch.no_grad()
     def step(self, closure=None):
