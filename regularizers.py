@@ -23,6 +23,20 @@ class reg_l1:
     def sub_grad(self, v):
         return self.mu * torch.sign(v)
     
+
+class reg_l1_pos:
+    def __init__(self, mu=1.0):
+        self.mu = mu
+        
+    def __call__(self, x):
+        return self.mu * torch.norm(x, p=1)
+        
+    def prox(self, x, delta=1.0):
+        return torch.clamp(torch.sign(x) * torch.clamp(torch.abs(x) - (delta * self.mu),min=0),min=0)
+        
+    def sub_grad(self, v):
+        return self.mu * torch.sign(v)
+    
     
     
 class reg_l1_l2:
@@ -95,13 +109,8 @@ class reg_soft_bernoulli:
     def __init__(self,mu=1.0):
         self.mu = mu
         
-        
     def prox(self, x, delta=1.0):
-        c = (torch.tanh(torch.abs(x) - (delta * self.mu)) + 1)/2
-        return torch.sign(x) * torch.bernoulli(c)
-#     def prox(self, x, delta=1.0):
-#         x_max = torch.max(torch.abs(x))
-#         return torch.bernoulli(torch.abs(x)/x_max) * x
+        return torch.sign(x) * torch.max(torch.clamp(torch.abs(x) - (delta * self.mu),min=0),torch.bernoulli(0.01*torch.ones_like(x)))
     
     def sub_grad(self, v):
         return self.mu * torch.sign(v)
