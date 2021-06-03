@@ -26,7 +26,7 @@ def train_step(conf, model, opt, train_loader, verbosity = 1):
         if conf.eval_acc:
             acc += (logits.max(1)[1] == y).sum().item()
         
-        tot_loss += y.shape[0]*loss.item()
+        tot_loss += loss.item()
         tot_steps += y.shape[0]
 
     # print the current accuracy and loss
@@ -100,6 +100,8 @@ def test(conf, model, test_loader, verbosity=1):
     model.eval()
     acc = 0
     tot_steps = 0
+    loss = 0
+    
     with torch.no_grad():
         for batch_idx, (x, y) in enumerate(test_loader):
             # get batch data
@@ -108,13 +110,17 @@ def test(conf, model, test_loader, verbosity=1):
             pred = model(x)
             if conf.eval_acc:
                 acc += (pred.max(1)[1] == y).sum().item()
+            
+            c_loss = conf.loss(pred, y)
+            loss += c_loss.item()
+            
             tot_steps += y.shape[0]
     
     # print accuracy
     if verbosity > 0: 
         print(50*"-")
         print('Test Accuracy:', acc/tot_steps)
-    return {'acc':acc/tot_steps}
+    return {'acc':acc/tot_steps, 'loss':loss}
 
 # ------------------------------------------------------------------------
 # Pruning step
