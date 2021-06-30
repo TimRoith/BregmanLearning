@@ -42,6 +42,8 @@ We use a *sparse initialization strategy* by initializing parameters non-zero wi
 Their variance is chosen to avoid vanishing or exploding gradients, generalizing Kaiming-He or Xavier initialization.
 
 ## 🔬 Experiments
+The different experiments can be executed as Jupyter notebooks in the 
+[notebooks folder](https://github.com/TimRoith/BregmanLearning/tree/main/notebooks).
 
 ### Classification
 
@@ -52,8 +54,12 @@ Their variance is chosen to avoid vanishing or exploding gradients, generalizing
 #### Linear Layers
 
 #### Convolutions and Group Sparsity
+In this experiment we consider the Fashion-MNIST classification task using a simple convolutional net. The experiment can be excecuted as a notebook, 
+namely via the file [ConvNet-Classification](https://github.com/TimRoith/BregmanLearning/blob/main/notebooks/ConvNet-Classification.ipynb).
 
 #### ResNet
+In this experiment we consider the CIFAR10 classification task using a ResNet. The experiment can be excecuted as a notebook, 
+namely via the file [ResNet-Classification](https://github.com/TimRoith/BregmanLearning/blob/main/notebooks/ResNet-Classification.ipynb).
 
 
 ### NAS
@@ -61,6 +67,9 @@ Their variance is chosen to avoid vanishing or exploding gradients, generalizing
 <p align="center">
       <img src="https://user-images.githubusercontent.com/44805883/120520730-70547b80-c3d4-11eb-94f8-df36e24ad778.png" width="700">
 </p>
+This experiment implements the neural architecture search as proposed in  [[4]](#4). The corresponding notebooks are 
+[DenseNet](https://github.com/TimRoith/BregmanLearning/blob/main/notebooks/DenseNet.ipynb) and 
+[Skip-Encoder](https://github.com/TimRoith/BregmanLearning/blob/main/notebooks/Skip-Encoder.ipynb).
 
 ## 📝 References
 <a id="1">[1]</a> Leon Bungert, Tim Roith, Daniel Tenbrinck, Martin Burger. "A Bregman Learning Framework for Sparse Neural Networks." arXiv preprint arXiv:2105.04319 (2021). https://arxiv.org/abs/2105.04319
@@ -68,3 +77,5 @@ Their variance is chosen to avoid vanishing or exploding gradients, generalizing
 <a id="2">[2]</a> Woatao Yin, Stanley Osher, Donald Goldfarb, Jerome Darbon. "Bregman iterative algorithms for \ell_1-minimization with applications to compressed sensing." SIAM Journal on Imaging sciences 1.1 (2008): 143-168.
 
 <a id="3">[3]</a> Diederik Kingma, Jimmy Lei Ba. "Adam: A Method for Stochastic Optimization." arXiv preprint arXiv:1412.6980 (2014). https://arxiv.org/abs/1412.6980
+
+<a id="4">[4]</a> Leon Bungert, Tim Roith, Daniel Tenbrinck, Martin Burger. "Neural Architecture Search via Bregman Iterations." arXiv preprint arXiv:2106.02479 (2021). https://arxiv.org/abs/2106.02479
