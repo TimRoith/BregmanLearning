@@ -67,7 +67,10 @@ namely via the file [ResNet-Classification](https://github.com/TimRoith/BregmanL
 <p align="center">
       <img src="https://user-images.githubusercontent.com/44805883/120520730-70547b80-c3d4-11eb-94f8-df36e24ad778.png" width="700">
 </p>
-This experiment implements the neural architecture search as proposed in  [[4]](#4). The corresponding notebooks are 
+
+This experiment implements the neural architecture search as proposed in  [[4]](#4). 
+
+The corresponding notebooks are 
 [DenseNet](https://github.com/TimRoith/BregmanLearning/blob/main/notebooks/DenseNet.ipynb) and 
 [Skip-Encoder](https://github.com/TimRoith/BregmanLearning/blob/main/notebooks/Skip-Encoder.ipynb).
 
