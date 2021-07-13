@@ -37,6 +37,7 @@ class Conf:
         self.data_set = "MNIST"
         self.data_file = ""
         self.train_split = 1.0
+        self.download = False
         
         # loss function
         self.loss = F.cross_entropy

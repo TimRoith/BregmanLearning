@@ -38,8 +38,8 @@ def get_mnist(conf):
     transform = transforms.Compose([transforms.ToTensor()])
     
     # train and test set
-    train = datasets.MNIST(conf.data_file, train=True, download=False, transform=transform)
-    test = datasets.MNIST(conf.data_file, train=False, download=False, transform=transform)
+    train = datasets.MNIST(conf.data_file, train=True, download=conf.download, transform=transform)
+    test = datasets.MNIST(conf.data_file, train=False, download=conf.download, transform=transform)
     
     return train, test
 
@@ -62,8 +62,8 @@ def get_encoder_mnist(conf):
     transform_clean = transforms.Compose([transforms.ToTensor()])
        
     # train and test set
-    train = AutoEncodeDataset(datasets.MNIST(conf.data_file, train=True, download=False), transform_aug, transform_clean)
-    test = AutoEncodeDataset(datasets.MNIST(conf.data_file, train=False, download=False), transform_aug, transform_clean)
+    train = AutoEncodeDataset(datasets.MNIST(conf.data_file, train=True, download=conf.download), transform_aug, transform_clean)
+    test = AutoEncodeDataset(datasets.MNIST(conf.data_file, train=False, download=conf.download), transform_aug, transform_clean)
     
     return train, test
 
@@ -72,8 +72,8 @@ def get_fashion_mnist(conf):
     transform = transforms.Compose([transforms.ToTensor()])
     
     # train and test set
-    train = datasets.FashionMNIST(conf.data_file, train=True, download=False,transform=transform)
-    test = datasets.FashionMNIST(conf.data_file, train=False, download=False, transform=transform)
+    train = datasets.FashionMNIST(conf.data_file, train=True, download=conf.download,transform=transform)
+    test = datasets.FashionMNIST(conf.data_file, train=False, download=conf.download, transform=transform)
     
     return train, test
 
@@ -87,8 +87,8 @@ def get_cifar10(conf):
     transform_test = transforms.Compose([transforms.ToTensor()])
     
    # train and test set
-    train = datasets.CIFAR10(conf.data_file, train=True, download=False, transform=transform_train)
-    test = datasets.CIFAR10(conf.data_file, train=False, download=False, transform=transform_test)
+    train = datasets.CIFAR10(conf.data_file, train=True, download=conf.download, transform=transform_train)
+    test = datasets.CIFAR10(conf.data_file, train=False, download=conf.download, transform=transform_test)
     
     return train, test
 
