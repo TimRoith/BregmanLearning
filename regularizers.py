@@ -1,4 +1,5 @@
 import torch
+import math
 
 class reg_none:
     def __call__(self, x):
@@ -45,11 +46,11 @@ class reg_l1_l2:
         
     #ToDo: incorporate mu in call
     def __call__(self, x):
-        return self.mu * torch.sqrt(torch.tensor(x.shape[-1])) * torch.norm(torch.norm(x,p=2,dim=1), p=1)
+        return self.mu * math.sqrt(x.shape[-1]) * torch.norm(torch.norm(x,p=2,dim=1), p=1)
         
     def prox(self, x, delta=1.0):
         thresh = delta*self.mu
-        thresh *= torch.sqrt(torch.tensor(x.shape[-1]))
+        thresh *= math.sqrt(x.shape[-1])
         
         ret = torch.clone(x)
         nx = torch.norm(x,p=2,dim=1).view(x.shape[0],1)       
@@ -61,7 +62,7 @@ class reg_l1_l2:
     
         
     def sub_grad(self, x):
-        thresh = self.mu * torch.sqrt(torch.tensor(x.shape[-1]))
+        thresh = self.mu * math.sqrt(x.shape[-1])
         #
         nx = torch.norm(x,p=2,dim=1).view(x.shape[0],1)      
         ind = torch.where((nx!=0))[0]
