@@ -51,7 +51,15 @@ The different experiments can be executed as Jupyter notebooks in the
       <img src="https://user-images.githubusercontent.com/44805883/120520997-bdd0e880-c3d4-11eb-9743-166b097fe70b.png" width="700">
 </p>
 
-#### Linear Layers
+#### Mulit Layer Perceptron
+In this experiment we consider the MNIST classification task using a simple multi layer perceptron.
+We compare the LinBreg optimizer to standard SGD and proximal descent. The respective notebook can be found at 
+[MLP-Classification](https://github.com/TimRoith/BregmanLearning/blob/main/notebooks/MLP-Classification.ipynb).
+
+<p align="center">
+      <img src="https://user-images.githubusercontent.com/44805883/126574731-ad93c4fe-72e1-43c8-8e82-082045a312c0.png" width="700">
+</p>
+
 
 #### Convolutions and Group Sparsity
 In this experiment we consider the Fashion-MNIST classification task using a simple convolutional net. The experiment can be excecuted as a notebook, 
