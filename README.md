@@ -86,6 +86,8 @@ The corresponding notebooks are
 
 The notebooks will throw errors if the datasets cannot be found. You can change the default configuration ```'download':False``` to ```'download':True``` in order to automatically download the necessary dataset and store it in the appropriate folder.
 
+If you want to run the code on your CPU you should replace ```'use_cuda':True, 'num_workers':4``` by ```'use_cuda':False, 'num_workers':0``` in the configuration of the notebook.
+
 ## 📝 References
 <a id="1">[1]</a> Leon Bungert, Tim Roith, Daniel Tenbrinck, Martin Burger. "A Bregman Learning Framework for Sparse Neural Networks." arXiv preprint arXiv:2105.04319 (2021). https://arxiv.org/abs/2105.04319
 
