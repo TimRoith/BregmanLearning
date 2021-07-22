@@ -40,7 +40,7 @@ def train_step(conf, model, opt, train_loader, verbosity = 1):
 
 
 # validation step
-def validation_step(conf, model, opt, validation_loader, opt_reg_eval = False, verbosity = 1):
+def validation_step(conf, model, opt, validation_loader, verbosity = 1):
     acc = 0.0
     loss = 0.0
     tot_steps = 0
@@ -73,10 +73,12 @@ def validation_step(conf, model, opt, validation_loader, opt_reg_eval = False, v
     node_sparse = maf.node_sparsity(model)
     
     # ------------------------------------------------------------------------
-    # Evaluate L1 norm and append to history
-    reg_vals = []
-    if opt_reg_eval:
+    # evaluate regularizers of opt and append to history
+    reg_eval = getattr(opt, "evaluate_reg", None)
+    if callable(reg_eval):
         reg_vals = opt.evaluate_reg()
+    else:
+        reg_vals = []
          
     # print values
     if verbosity > 0: 
