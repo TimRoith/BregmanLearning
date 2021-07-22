@@ -91,25 +91,33 @@ class Conf:
             res_writer.writerow(values)
         
 class run:
-    def __init__(self,**kwargs):
-        self.num_runs = kwargs.get('num_runs', 5)
-        self.run_iter = 0
-        
-        # ----------------------------------------
-        # set all kwargs
-        # ----------------------------------------
-        for key, value in kwargs.items():
-            if not key == "num_runs":
-                setattr(self, key+"_list", cycle(value))
-        # ----------------------------------------
-        
+    def __init__(self,params):
+        self.iter = 0
+        self.params = []
+        for i in range(len(params)):
+            p = params[i]
+            reps = p.get('reps',1)
+
+            for j in range(reps):
+                # new dictionary to use for local parameters
+                p_loc = p.copy()
+                p_loc['random_seed'] = p.get('random_seed',0) + j
+                
+                self.params.append(p_loc)
+                
+        self.num_runs = len(self.params)
+        # ----------------------------------------        
         # history
-        self.run_history = []
+        self.history = []
         
-    def step(self):
-        if self.run_iter <= self.num_runs:
-            self.run_history.append({})
-            self.run_iter += 1
+    def step(self,conf=None):
+        if self.iter < self.num_runs:
+            if not (conf is None):
+                for key in self.params[self.iter]:
+                    setattr(conf, key,self.params[self.iter][key])
+            # ----------------------------------------
+            self.history.append({})
+            self.iter += 1
             return True
         else:
             return False
@@ -117,31 +125,14 @@ class run:
     def add_history(self, hist, name):
         for key in hist:
             loc_key = name + "_"+ key
-            rs_loc = self.run_history[self.run_iter-1]
             
             # add to history   
-            rs_loc[loc_key] = hist[key]
+            self.history[self.iter-1][loc_key] = hist[key]
              
             
-        
-
 # -----------------------------------------------------------------------------------
-# no regularization
+# fix a specific seed
 # -----------------------------------------------------------------------------------
-def plain_example(data_file, use_cuda=False, num_workers=None):
-    if use_cuda and num_workers is None:
-        num_workers = 4
-    else:
-        num_workers = 0
-    
-    conf_args = {'lamda':0.0,'data_file':data_file, 'use_cuda':use_cuda, 'train_split':0.9, 'num_workers':num_workers,
-                 'regularization': "none", 'activation_function':"sigmoid"}
-
-    # get configuration
-    conf = Conf(**conf_args)
-    
-    return conf
-
 def seed_torch(seed=0):
     random.seed(seed)
     np.random.seed(seed)

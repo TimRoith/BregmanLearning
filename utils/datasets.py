@@ -244,7 +244,3 @@ class GaussianSmoothing(torch.nn.Module):
             filtered (torch.Tensor): Filtered output.
         """        
         return self.conv(input, weight=self.weight, groups=self.groups,padding=self.pad)
-    
-    
-    
-    
