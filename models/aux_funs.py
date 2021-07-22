@@ -251,4 +251,4 @@ def get_bias(model):
             if not (m.bias is None):
                 yield m.bias
         else:
-            continue       
+            continue
