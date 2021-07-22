@@ -82,6 +82,10 @@ The corresponding notebooks are
 [DenseNet](https://github.com/TimRoith/BregmanLearning/blob/main/notebooks/DenseNet.ipynb) and 
 [Skip-Encoder](https://github.com/TimRoith/BregmanLearning/blob/main/notebooks/Skip-Encoder.ipynb).
 
+## :point_up: Miscellaneous
+
+The notebooks will throw errors if the datasets cannot be found. You can change the default configuration ```'download':False``` to ```'download':True``` in order to automatically download the necessary dataset and store it in the appropriate folder.
+
 ## 📝 References
 <a id="1">[1]</a> Leon Bungert, Tim Roith, Daniel Tenbrinck, Martin Burger. "A Bregman Learning Framework for Sparse Neural Networks." arXiv preprint arXiv:2105.04319 (2021). https://arxiv.org/abs/2105.04319
 
