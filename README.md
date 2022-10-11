@@ -2,13 +2,15 @@
 Implementation of the inverse scale space training algorithms for sparse neural networks, proposed in **A Bregman Learning Framework for Sparse Neural Networks** [[1]](#1).
 Feel free to use it and please refer to our paper when doing so.
 ```
-@misc{bungert2021bregman,
-      title={A Bregman Learning Framework for Sparse Neural Networks}, 
-      author={Leon Bungert and Tim Roith and Daniel Tenbrinck and Martin Burger},
-      year={2021},
-      eprint={2105.04319},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG}
+@article{JMLR:v23:21-0545,
+  author  = {Leon Bungert and Tim Roith and Daniel Tenbrinck and Martin Burger},
+  title   = {A Bregman Learning Framework for Sparse Neural Networks},
+  journal = {Journal of Machine Learning Research},
+  year    = {2022},
+  volume  = {23},
+  number  = {192},
+  pages   = {1--43},
+  url     = {http://jmlr.org/papers/v23/21-0545.html}
 }
 ```
 <p align="center">
@@ -89,7 +91,7 @@ The notebooks will throw errors if the datasets cannot be found. You can change 
 If you want to run the code on your CPU you should replace ```'use_cuda':True, 'num_workers':4``` by ```'use_cuda':False, 'num_workers':0``` in the configuration of the notebook.
 
 ## 📝 References
-<a id="1">[1]</a> Leon Bungert, Tim Roith, Daniel Tenbrinck, Martin Burger. "A Bregman Learning Framework for Sparse Neural Networks." arXiv preprint arXiv:2105.04319 (2021). https://arxiv.org/abs/2105.04319
+<a id="1">[1]</a> Leon Bungert, Tim Roith, Daniel Tenbrinck, Martin Burger. "A Bregman Learning Framework for Sparse Neural Networks." Journal of Machine Learning Research 23.192 (2022): 1-43. https://www.jmlr.org/papers/v23/21-0545.html
 
 <a id="2">[2]</a> Woatao Yin, Stanley Osher, Donald Goldfarb, Jerome Darbon. "Bregman iterative algorithms for \ell_1-minimization with applications to compressed sensing." SIAM Journal on Imaging sciences 1.1 (2008): 143-168.
 
