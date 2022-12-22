@@ -54,7 +54,7 @@ The different experiments can be executed as Jupyter notebooks in the
 </p>
 
 #### Mulit Layer Perceptron
-In this experiment we consider the MNIST classification task using a simple multi layer perceptron.
+In this experiment we consider the MNIST classification task using a simple multilayer perceptron.
 We compare the LinBreg optimizer to standard SGD and proximal descent. The respective notebook can be found at 
 [MLP-Classification](https://github.com/TimRoith/BregmanLearning/blob/main/notebooks/MLP-Classification.ipynb).
 
