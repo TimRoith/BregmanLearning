@@ -142,7 +142,7 @@ class AdaBreg(torch.optim.Optimizer):
             # get regularizer for this group
             reg = group['reg']
             # get parameters for adam
-            step_size = group['lr']
+            lr = group['lr']
             beta1, beta2 = group['betas']
             eps = group['eps']
             for p in group['params']:
@@ -181,7 +181,7 @@ class AdaBreg(torch.optim.Optimizer):
                 denom = (exp_avg_sq.sqrt() / math.sqrt(bias_correction2)).add_(eps)
                 
                 # step size in adam update
-                alpha = step_size / bias_correction1
+                step_size = lr / bias_correction1
                 
                 # update subgrad
                 sub_grad.addcdiv_(exp_avg, denom, value=-step_size)
